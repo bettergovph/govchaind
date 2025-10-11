@@ -1,16 +1,17 @@
-name: Build
+name: Sonarqube Scan
 
 on:
   push:
     branches:
       - main
-
+  pull_request:
+    types: [opened, synchronize, reopened] # Trigger on PR opened, updated, or reopened
 
 jobs:
-  build:
-    name: Build and analyze
+  sonarqube_analysis:
+    name: Sonarqube Analysis
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
         with:

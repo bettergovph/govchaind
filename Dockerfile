@@ -26,7 +26,7 @@ RUN CGO_ENABLED=0 go build -o /bin/govchaind ./cmd/govchaind
 FROM alpine:latest
 
 # Install ca-certificates
-RUN apk --no-cache add ca-certificates dos2unix curl jq
+RUN apk --no-cache add ca-certificates curl dos2unix jq
 
 # Create a non-root user
 RUN adduser -D -u 1001 nonroot
