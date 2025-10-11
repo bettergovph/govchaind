@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   govchaind:
-    image: govchaind:latest
+    build: .
     container_name: govchaind-node
     volumes:
       - govchaind-data:/home/nonroot/.govchain

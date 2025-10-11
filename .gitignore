@@ -1,11 +1,49 @@
-vue/node_modules
-vue/dist
-release/
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
+*.wasm
+*.o
+*.cgo1.go
+*.cgo2.c
+*.cgo2.h
+_test
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go generate command
+*.pb.go
+
+# Coverage output
+*.out
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Go module cache
+# This is usually in your GOPATH, so it should not be committed.
+# If you have a local module cache in your project, uncomment this line.
+# .cache/
+
+# IDE-specific files
 .idea/
 .vscode/
 .DS_Store
-*.dot
-*.log
-*.ign
 
+# Logs and temporary files
+*.log
+*.tmp
+*.swp
+*.bak
+
+# Environment variables
 .env
+
+# Build output
+dist/
+build/
+
+# Editor backup files
+*~

@@ -1,4 +1,3 @@
-
 # --- Build Stage ---
 FROM golang:1.24 AS builder
 
@@ -7,12 +6,18 @@ WORKDIR /src
 
 # Copy go module and sum files
 COPY go.mod go.sum ./
+
+# Copy only necessary source code
+COPY app/ app/
+COPY cmd/ cmd/
+COPY x/ x/
+COPY proto/ proto/
+COPY docs/ docs/
+COPY testutil/ testutil/
+
 # Download dependencies
 RUN go version
 RUN go mod tidy
-
-# Copy the rest of the source code
-COPY . .
 
 # Build the application
 RUN CGO_ENABLED=0 go build -o /bin/govchaind ./cmd/govchaind
@@ -21,7 +26,7 @@ RUN CGO_ENABLED=0 go build -o /bin/govchaind ./cmd/govchaind
 FROM alpine:latest
 
 # Install ca-certificates
-RUN apk --no-cache add ca-certificates dos2unix curl gosu jq
+RUN apk --no-cache add ca-certificates dos2unix curl jq
 
 # Create a non-root user
 RUN adduser -D -u 1001 nonroot
@@ -33,6 +38,9 @@ COPY --from=builder /bin/govchaind /usr/local/bin/govchaind
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN dos2unix /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Set the user to nonroot
+USER nonroot
 
 
 
