@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   govchaind:
     image: ghcr.io/bettergovph/govchaind:latest

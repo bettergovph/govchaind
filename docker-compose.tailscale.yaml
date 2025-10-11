@@ -1,21 +1,9 @@
-version: '3.8'
-
 services:
   govchaind:
-    build: .
-    container_name: govchaind-node
     volumes:
-      - govchaind-data:/home/nonroot/.govchain
       - tailscale-ip-share:/var/run/tailscale-ip
     environment:
-      - MONIKER=my-node
-      # Optional: Manually set the external IP address for the node.
-      # If not set, the entrypoint script will try to get it from Tailscale,
-      # or discover the public IP (e.g., for VPS deployments).
-      # - EXTERNAL_IP=YOUR_PUBLIC_IP_OR_DOMAIN
-    ports:
-      - "26656:26656"
-      - "26657:26657"
+      - MONIKER=${MONIKER}
     networks:
       - govchain_network
     depends_on:
@@ -44,6 +32,5 @@ networks:
     driver: bridge
 
 volumes:
-  govchaind-data:
   tailscale-state:
   tailscale-ip-share:

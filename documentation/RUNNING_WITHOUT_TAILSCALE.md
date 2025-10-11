@@ -9,48 +9,73 @@ This guide explains how to run a `govchaind` node using Docker without the Tails
 
 ---
 
-## Option 1: Using a Simplified Docker Compose File
+## Option 1: Using a Base Docker Compose File (without Tailscale)
 
-This is the recommended method as it is easy to manage. Create a file named `docker-compose.standalone.yml` with the following content:
+This is the recommended method for running your node without Tailscale, as it is easy to manage. You can choose between a production setup (pulling a pre-built image) or a local development setup (building the image locally).
+
+### 1.1. For Production/Deployment (pulling image from GHCR)
+
+Use the `docker-compose.prod.yaml` file.
 
 ```yaml
+# docker-compose.prod.yaml
 version: '3.8'
 
 services:
   govchaind:
-    image: ghcr.io/bettergovph/govchaind:latest # Or your locally built image, e.g., govchaind:latest
-    container_name: govchaind-node
-    volumes:
-      - govchaind-data:/home/nonroot/.govchain
-    environment:
-      - MONIKER="My Standalone Node" # Customize your node's name
-      # Optional: Manually set the external IP address for the node.
-      # If not set, the entrypoint script will discover the public IP.
-      # - EXTERNAL_IP=YOUR_PUBLIC_IP_OR_DOMAIN
+    image: ghcr.io/bettergovph/govchaind:latest
     ports:
-      - "26656:26656" # P2P port
-      - "26657:26657" # RPC port
-      - "1317:1317"    # REST API port
-      - "9090:9090"    # gRPC port
-    networks:
-      - govchain_network
-
-networks:
-  govchain_network:
-    driver: bridge
-
+      - "26656:26656"
+      - "26657:26657"
+    volumes:
+      - govchaind_data:/home/nonroot/.govchain
+    environment:
+      # Add any production specific environment variables here
+      # For example:
+      # - NODE_ENV=production
 volumes:
-  govchaind-data:
+  govchaind_data:
 ```
 
-### How to Use
+**How to Use:**
+To start the node:
+```bash
+docker compose -f docker-compose.prod.yaml up -d
+```
 
-1.  **Save the File**: Save the content above as `docker-compose.standalone.yml` in the root of the project.
+### 1.2. For Local Development (building image locally)
 
-2.  **Start the Node**:
-    ```bash
-    docker-compose -f docker-compose.standalone.yml up -d
-    ```
+Use the `docker-compose.local.yaml` file.
+
+```yaml
+# docker-compose.local.yaml
+version: '3.8'
+
+services:
+  govchaind:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "26656:26656"
+      - "26657:26657"
+    volumes:
+      - govchaind_data:/home/nonroot/.govchain
+    environment:
+      # Add any local development specific environment variables here
+      # For example:
+      # - DEBUG=true
+    # command: start --log_level debug # Example of overriding default command
+volumes:
+  govchaind_data:
+```
+
+**How to Use:**
+To build and start the node:
+```bash
+docker compose -f docker-compose.local.yaml build
+docker compose -f docker-compose.local.yaml up -d
+```
 
 3.  **Monitor Logs**:
     ```bash
