@@ -46,7 +46,9 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
 
 	"govchain/docs"
+	accountabilitymodulekeeper "govchain/x/accountabilityscores/keeper"
 	datasetsmodulekeeper "govchain/x/datasets/keeper"
+	wasmkeeper "govchain/x/wasm/keeper"
 )
 
 const (
@@ -99,8 +101,10 @@ type App struct {
 	TransferKeeper      ibctransferkeeper.Keeper
 
 	// simulation manager
-	sm             *module.SimulationManager
-	DatasetsKeeper datasetsmodulekeeper.Keeper
+	sm                   *module.SimulationManager
+	DatasetsKeeper       datasetsmodulekeeper.Keeper
+	AccountabilityKeeper accountabilitymodulekeeper.Keeper
+	WasmKeeper           wasmkeeper.Keeper
 }
 
 func init() {
@@ -173,7 +177,9 @@ func New(
 		&app.ConsensusParamsKeeper,
 		&app.CircuitBreakerKeeper,
 		&app.ParamsKeeper,
+		&app.AccountabilityKeeper,
 		&app.DatasetsKeeper,
+		&app.WasmKeeper,
 	); err != nil {
 		panic(err)
 	}
