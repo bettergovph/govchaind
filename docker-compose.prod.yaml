@@ -1,0 +1,14 @@
+services:
+  govchaind:
+    image: ghcr.io/bettergovph/govchaind:latest
+    ports:
+      - "26656:26656"
+      - "26657:26657"
+    volumes:
+      - govchaind_data:/home/nonroot/.govchain
+    environment:
+      # Add any production specific environment variables here
+      # For example:
+      # - NODE_ENV=production
+volumes:
+  govchaind_data:

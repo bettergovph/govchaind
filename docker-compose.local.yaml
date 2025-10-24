@@ -1,0 +1,17 @@
+services:
+  govchaind:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "26656:26656"
+      - "26657:26657"
+    volumes:
+      - govchaind_data:/home/nonroot/.govchain
+    # Add any local development specific environment variables here
+    # For example:
+    #   DEBUG: "true"
+    environment: {}
+    # command: start --log_level debug # Example of overriding default command
+volumes:
+  govchaind_data:

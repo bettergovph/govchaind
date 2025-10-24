@@ -55,76 +55,53 @@ For non-interactive Docker environments, it's best practice to use a reusable au
 
     *   `TS_STATE_DIR`: This variable is used to specify the directory where Tailscale stores its state files. By mapping this to a Docker volume, Tailscale's configuration and identity will persist across container restarts, preventing the need to re-authenticate every time.
 
-## 4. Running the GovChain Node with Docker Compose
+## 4. Running the GovChain Node with Docker Compose and Tailscale
 
-The `docker-compose.yml` file orchestrates two services: `govchaind-node` (your blockchain node) and `tailscale` (a sidecar container for Tailscale connectivity).
+To run your `govchaind` node with Tailscale, you will combine a base Docker Compose configuration (either for local development or production) with the `docker-compose.tailscale.yaml` file. This modular approach allows you to opt-in to Tailscale networking when needed.
 
-Here's the relevant `docker-compose.yml` snippet:
+### 4.1. Base Docker Compose Files
 
-```yaml
-version: '3.8'
+Choose one of the following base configurations:
 
-services:
-  govchaind:
-    image: govchaind:latest
-    container_name: govchaind-node
-    volumes:
-      - govchaind-data:/home/nonroot/.govchain
-      - tailscale-ip-share:/var/run/tailscale-ip
-    environment:
-      - MONIKER=my-node # Customize your node's name
-      # Optional: Manually set the external IP address for the node.
-      # If set, this will override the Tailscale-detected IP.
-      # - EXTERNAL_IP=YOUR_PUBLIC_IP_OR_DOMAIN
-    ports:
-      - "26656:26656"
-      - "26657:26657"
-    networks:
-      - govchain_network
-    depends_on:
-      - tailscale
+*   **For Production/Deployment (pulling image from GHCR):** Use `docker-compose.prod.yaml`.
+*   **For Local Development (building image locally):** Use `docker-compose.local.yaml`.
 
-  tailscale:
-    image: tailscale/tailscale
-    container_name: tailscale-sidecar
-    cap_add:
-      - NET_ADMIN
-    devices:
-      - /dev/net/tun
-    volumes:
-      - tailscale-state:/var/lib/tailscale
-      - tailscale-ip-share:/var/run/tailscale-ip
-    environment:
-      - TS_AUTHKEY=${TS_AUTHKEY}
-      - TS_STATE_DIR=/var/lib/tailscale
-      - TS_HOSTNAME=my-node-ts
-    networks:
-      - govchain_network
-    command: sh -c "tailscaled --state=/var/lib/tailscale/tailscaled.state --socket=/var/run/tailscale/tailscaled.sock & tailscale up --authkey=$TS_AUTHKEY --hostname=$TS_HOSTNAME --accept-routes && tailscale ip -4 > /var/run/tailscale-ip/ts_ip && sleep infinity"
+### 4.2. Tailscale Docker Compose File
 
-networks:
-  govchain_network:
-    driver: bridge
+The `docker-compose.tailscale.yaml` file defines the `tailscale` sidecar service and extends the `govchaind` service to integrate with Tailscale networking.
 
-volumes:
-  govchaind-data:
-  tailscale-state:
-  tailscale-ip-share:
-```
+### 4.3. Starting the Services
 
-### 4.1. Build the Docker Image
+To start your `govchaind` node with Tailscale, use the `docker compose` command with multiple `-f` flags:
 
-First, build the `govchaind` Docker image. This step compiles the `govchaind` binary and sets up the container environment.
+**For Production/Deployment with Tailscale:**
 ```bash
-make docker-build
+docker compose -f docker-compose.prod.yaml -f docker-compose.tailscale.yaml up -d
 ```
-This command executes `docker build -t govchaind:latest .` and tags your image.
 
-### 4.2. Start the Docker Compose Services
+**For Local Development with Tailscale:**
+```bash
+docker compose -f docker-compose.local.yaml -f docker-compose.tailscale.yaml up -d
+```
+
+This command orchestrates two services: `govchaind-node` (your blockchain node) and `tailscale` (a sidecar container for Tailscale connectivity).
+
+### 4.4. Build the Docker Image (for local development with Tailscale)
+
+If you are using `docker-compose.local.yaml` with Tailscale, you will need to build the `govchaind` Docker image first:
+```bash
+docker compose -f docker-compose.local.yaml -f docker-compose.tailscale.yaml build
+```
+
+### 4.5. Start the Docker Compose Services
 
 Now, start the `govchaind` and `tailscale` services using Docker Compose:
 ```bash
-make docker-up
+# For Production/Deployment with Tailscale
+docker compose -f docker-compose.prod.yaml -f docker-compose.tailscale.yaml up -d
+
+# For Local Development with Tailscale
+docker compose -f docker-compose.local.yaml -f docker-compose.tailscale.yaml up -d
 ```
 This command executes `docker-compose up -d`, which starts the containers in detached mode (in the background).
 

@@ -1,0 +1,62 @@
+name: Sonarqube Scan
+
+on:
+  push:
+    branches:
+      - main
+  pull_request_target:
+    types: [opened, synchronize, reopened] # Trigger on PR opened, updated, or reopened
+
+jobs:
+  sonarqube_analysis:
+    name: Sonarqube Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - name: Configure SonarQube environment
+        id: sonar_env
+        env:
+          SECRET_SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SECRET_SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SECRET_SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+          VAR_SONAR_TOKEN: ${{ vars.SONAR_TOKEN }}
+          VAR_SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+          VAR_SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
+        run: |
+          set -euo pipefail
+
+          token="${SECRET_SONAR_TOKEN:-${VAR_SONAR_TOKEN:-}}"
+          host="${SECRET_SONAR_HOST_URL:-${VAR_SONAR_HOST_URL:-}}"
+          project_key="${SECRET_SONAR_PROJECT_KEY:-${VAR_SONAR_PROJECT_KEY:-}}"
+
+          if [ -z "$token" ] || [ -z "$host" ]; then
+            echo "SonarQube credentials are not configured. Skipping scan."
+            echo "should-run=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "SONAR_TOKEN=$token" >> "$GITHUB_ENV"
+          echo "SONAR_HOST_URL=$host" >> "$GITHUB_ENV"
+          if [ -n "$project_key" ]; then
+            echo "SONAR_PROJECT_KEY=$project_key" >> "$GITHUB_ENV"
+            echo "project-args=-Dsonar.projectKey=$project_key" >> "$GITHUB_OUTPUT"
+          else
+            echo "project-args=" >> "$GITHUB_OUTPUT"
+          fi
+
+          echo "should-run=true" >> "$GITHUB_OUTPUT"
+      - uses: SonarSource/sonarqube-scan-action@v6
+        if: steps.sonar_env.outputs.should-run == 'true'
+        env:
+          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ env.SONAR_HOST_URL }}
+        with:
+          args: ${{ steps.sonar_env.outputs.project-args }}
+      - uses: SonarSource/sonarqube-quality-gate-action@v1
+        if: steps.sonar_env.outputs.should-run == 'true'
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}

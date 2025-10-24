@@ -1,12 +1,28 @@
 #!/bin/sh
-set -e
+set -euo pipefail
+
+if ! command -v curl >/dev/null 2>&1; then
+  echo "Error: curl is required but was not found in PATH." >&2
+  exit 1
+fi
+
+if ! command -v jq >/dev/null 2>&1; then
+  echo "Error: jq is required but was not found in PATH." >&2
+  exit 1
+fi
+
+# Allow operators to override the genesis URL and expected checksum.
+GENESIS_URL=${GENESIS_URL:-"https://raw.githubusercontent.com/bettergovph/govchain/refs/heads/main/genesis.json"}
+GENESIS_SHA256=${GENESIS_SHA256:-""}
 
 # Exit if the MONIKER environment variable is not set.
-if [ -z "$MONIKER" ]; then
+if [ -z "${MONIKER:-}" ]; then
   echo "Error: The MONIKER environment variable is not set."
   echo "Please set it using -e MONIKER='your-moniker' with docker run, or in your docker-compose.yml."
   exit 1
 fi
+
+EXTERNAL_IP=${EXTERNAL_IP:-""}
 
 # Ensure the config directory exists
 mkdir -p "/home/nonroot/.govchain/config"
@@ -16,11 +32,30 @@ chown nonroot:nonroot "/home/nonroot/.govchain/config"
 if [ ! -f "/home/nonroot/.govchain/config/genesis.json" ]; then
   # Define the path for the actual genesis.json
   ACTUAL_GENESIS_PATH="/home/nonroot/.govchain/config/genesis.json"
-  TEMP_GENESIS_PATH="/tmp/genesis.json" # Use a temporary path for download
+  TEMP_GENESIS_PATH=$(mktemp /tmp/genesis.XXXXXX)
+
+  cleanup() {
+    [ -f "$TEMP_GENESIS_PATH" ] && rm -f "$TEMP_GENESIS_PATH"
+  }
+  trap cleanup EXIT
 
   # Download the actual genesis.json to a temporary location
-  echo "📥 Downloading actual genesis file to extract chain-id..."
-  env 'HOME=/home/nonroot' curl -sL "https://raw.githubusercontent.com/bettergovph/govchain/refs/heads/main/genesis.json" -o "$TEMP_GENESIS_PATH"
+  echo "📥 Downloading actual genesis file from $GENESIS_URL to extract chain-id..."
+  if ! env 'HOME=/home/nonroot' curl -fSL --retry 3 --retry-delay 2 "$GENESIS_URL" -o "$TEMP_GENESIS_PATH"; then
+    echo "Error: failed to download genesis file from $GENESIS_URL" >&2
+    exit 1
+  fi
+
+  if [ -n "$GENESIS_SHA256" ]; then
+    if ! command -v sha256sum >/dev/null 2>&1; then
+      echo "Error: sha256sum is required when GENESIS_SHA256 is provided." >&2
+      exit 1
+    fi
+    echo "🔐 Verifying genesis checksum..."
+    echo "$GENESIS_SHA256  $TEMP_GENESIS_PATH" | sha256sum -c -
+  else
+    echo "⚠️  Warning: GENESIS_SHA256 not provided. Skipping checksum verification."
+  fi
 
   # Extract chain-id from the downloaded genesis.json
   CHAIN_ID=$(jq -r '.chain_id' "$TEMP_GENESIS_PATH")
@@ -37,6 +72,7 @@ if [ ! -f "/home/nonroot/.govchain/config/genesis.json" ]; then
   # Replace the dummy genesis.json created by init with the actual downloaded one
   echo "Replacing dummy genesis.json with the actual genesis file..."
   mv "$TEMP_GENESIS_PATH" "$ACTUAL_GENESIS_PATH"
+  trap - EXIT
 
   # Set the minimum gas price in app.toml
   env 'HOME=/home/nonroot' sed -i 's/minimum-gas-prices = ""/minimum-gas-prices = "0stake"/' "/home/nonroot/.govchain/config/app.toml"
