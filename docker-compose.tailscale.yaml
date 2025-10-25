@@ -22,10 +22,59 @@ services:
     environment:
       - TS_AUTHKEY=${TS_AUTHKEY}
       - TS_STATE_DIR=/var/lib/tailscale
-      - TS_HOSTNAME=my-node-ts
+      - TS_HOSTNAME=${TS_HOSTNAME:-}
+      - TAILSCALE_SOCKET=/var/run/tailscale/tailscaled.sock
     networks:
       - govchain_network
-    command: sh -c "tailscaled --state=/var/lib/tailscale/tailscaled.state --socket=/var/run/tailscale/tailscaled.sock & tailscale up --authkey=$TS_AUTHKEY --hostname=$TS_HOSTNAME --accept-routes && tailscale ip -4 > /var/run/tailscale-ip/ts_ip && sleep infinity"
+    command: >-
+      sh -c "
+        set -eu
+        if [ -z \"$${TS_AUTHKEY:-}\" ]; then
+          echo 'Error: TS_AUTHKEY is required for the tailscale sidecar.' >&2
+          exit 1
+        fi
+        if [ -z \"$${TS_HOSTNAME:-}\" ]; then
+          TS_HOSTNAME=\"tailscale-$(hostname)\"
+        fi
+        mkdir -p /var/run/tailscale
+        tailscaled \\
+          --state=/var/lib/tailscale/tailscaled.state \\
+          --socket=$${TAILSCALE_SOCKET} &
+        daemon_pid=$!
+        cleanup() {
+          kill \"$daemon_pid\" >/dev/null 2>&1 || true
+          rm -f /var/run/tailscale-ip/ts_ip.tmp
+        }
+        trap cleanup EXIT INT TERM
+        bring_up() {
+          attempt=1
+          while true; do
+            if tailscale up --authkey=\"$${TS_AUTHKEY}\" --hostname=\"$${TS_HOSTNAME}\" --accept-routes; then
+              return 0
+            fi
+            if [ \"$attempt\" -ge 5 ]; then
+              return 1
+            fi
+            echo \"tailscale up failed (attempt $attempt). Retrying...\" >&2
+            attempt=$((attempt + 1))
+            sleep 3
+          done
+        }
+        if ! bring_up; then
+          echo 'Error: failed to authenticate with Tailscale after multiple attempts.' >&2
+          exit 1
+        fi
+        while kill -0 \"$daemon_pid\" 2>/dev/null; do
+          if tailscale ip -4 | awk 'NR==1' > /var/run/tailscale-ip/ts_ip.tmp; then
+            mv /var/run/tailscale-ip/ts_ip.tmp /var/run/tailscale-ip/ts_ip
+          else
+            echo 'Warning: unable to read Tailscale IPv4 address' >&2
+          fi
+          sleep 30
+        done
+        echo 'tailscaled exited unexpectedly' >&2
+        exit 1
+      "
 
 networks:
   govchain_network:
