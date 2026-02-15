@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package govchain.infrastructure.v1;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+import "govchain/infrastructure/v1/params.proto";
+import "govchain/infrastructure/v1/project.proto";
+
+option go_package = "govchain/x/infrastructure/types";
+
+// GenesisState defines the infrastructure module's genesis state.
+message GenesisState {
+  // params defines all the parameters of the module.
+  Params params = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  repeated InfraProject project_list = 2 [(gogoproto.nullable) = false];
+  uint64 project_count = 3;
+}
+
+// ============================================================================
+// Events (emitted by the module for indexing)
+// ============================================================================
+
+message EventProjectCreated {
+  string project_id = 1;
+  string title = 2;
+  string status = 3;
+  string sector = 4;
+  string publisher = 5;
+}
+
+message EventProjectUpdated {
+  string project_id = 1;
+  string status = 2;
+  string publisher = 3;
+}
+
+message EventProgressUpdated {
+  string project_id = 1;
+  string metric_id = 2;
+  string measure = 3;
+  string publisher = 4;
+}
+
+message EventDocumentAttached {
+  string project_id = 1;
+  string document_id = 2;
+  string document_type = 3;
+  string publisher = 4;
+}

@@ -1,0 +1,150 @@
+syntax = "proto3";
+
+package govchain.infrastructure.v1;
+
+import "amino/amino.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "govchain/infrastructure/v1/params.proto";
+import "govchain/infrastructure/v1/project.proto";
+import "govchain/infrastructure/v1/common.proto";
+
+option go_package = "govchain/x/infrastructure/types";
+
+// Msg defines the Msg service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // UpdateParams defines a (governance) operation for updating the module
+  // parameters. The authority defaults to the x/gov module account.
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+
+  // CreateProject creates a new infrastructure project on-chain.
+  rpc CreateProject(MsgCreateProject) returns (MsgCreateProjectResponse);
+
+  // UpdateProject updates an existing infrastructure project.
+  rpc UpdateProject(MsgUpdateProject) returns (MsgUpdateProjectResponse);
+
+  // UpdateProgress records progress metrics for a project.
+  rpc UpdateProgress(MsgUpdateProgress) returns (MsgUpdateProgressResponse);
+
+  // AttachDocument attaches a document to a project.
+  rpc AttachDocument(MsgAttachDocument) returns (MsgAttachDocumentResponse);
+
+  // LinkContractingProcess links an OCDS contracting process to a project.
+  rpc LinkContractingProcess(MsgLinkContractingProcess) returns (MsgLinkContractingProcessResponse);
+}
+
+// MsgUpdateParams is the Msg/UpdateParams request type.
+message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "govchain/x/infrastructure/MsgUpdateParams";
+
+  // authority is the address that controls the module (defaults to x/gov unless overwritten).
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // params defines the module parameters to update.
+  // NOTE: All parameters must be supplied.
+  Params params = 2 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+}
+
+// MsgUpdateParamsResponse defines the response structure for executing a
+// MsgUpdateParams message.
+message MsgUpdateParamsResponse {}
+
+// --- Project Management ---
+
+// MsgCreateProject creates a new infrastructure project.
+message MsgCreateProject {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // Project data (OC4IDS fields)
+  string project_id = 2;           // Unique project ID (e.g. "ph-dpwh-21NA0052")
+  string title = 3;
+  string description = 4;
+  string status = 5;               // identification, preparation, implementation, completion, cancelled
+  string project_type = 6;         // construction, rehabilitation, expansion, maintenance
+  repeated string sector = 7;      // transport.road, water.floodControl, buildings, etc.
+  string purpose = 8;
+
+  // Budget
+  Budget budget = 9;
+
+  // Period
+  Period period = 10;
+
+  // Locations
+  repeated Location locations = 11;
+
+  // Parties
+  repeated Organization parties = 12;
+
+  // Public authority
+  OrganizationReference public_authority = 13;
+
+  // Additional classifications
+  repeated Classification additional_classifications = 14;
+}
+
+message MsgCreateProjectResponse {
+  string project_id = 1;
+}
+
+// MsgUpdateProject updates an existing infrastructure project.
+message MsgUpdateProject {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string project_id = 2;
+
+  // Updatable fields
+  string title = 3;
+  string description = 4;
+  string status = 5;
+  string project_type = 6;
+  repeated string sector = 7;
+  string purpose = 8;
+  Budget budget = 9;
+  Period period = 10;
+  repeated Location locations = 11;
+  repeated Organization parties = 12;
+  Completion completion = 13;
+}
+
+message MsgUpdateProjectResponse {}
+
+// MsgUpdateProgress records progress metrics for a project.
+message MsgUpdateProgress {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string project_id = 2;
+  repeated Metric metrics = 3;
+}
+
+message MsgUpdateProgressResponse {}
+
+// MsgAttachDocument attaches a document to a project.
+message MsgAttachDocument {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string project_id = 2;
+  Document document = 3;
+}
+
+message MsgAttachDocumentResponse {
+  string document_id = 1;
+}
+
+// MsgLinkContractingProcess links an OCDS contracting process to a project.
+message MsgLinkContractingProcess {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string project_id = 2;
+  ContractingProcessSummary contracting_process = 3;
+}
+
+message MsgLinkContractingProcessResponse {}

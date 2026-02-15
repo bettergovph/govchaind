@@ -1,0 +1,25 @@
+syntax = "proto3";
+package govchain.infrastructure.v1;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "govchain/x/infrastructure/types";
+
+// Params defines the parameters for the infrastructure module.
+message Params {
+  option (amino.name) = "govchain/x/infrastructure/Params";
+  option (gogoproto.equal) = true;
+
+  // Default currency for Philippine infrastructure projects
+  string default_currency = 1;
+
+  // Whether project creation requires governance approval
+  bool require_project_verification = 2;
+
+  // Maximum project data size in bytes (prevent spam)
+  uint64 max_project_size = 3;
+
+  // Allowed project ID prefixes (governance-approved publishers)
+  repeated string allowed_project_prefixes = 4;
+}

@@ -47,6 +47,8 @@ import (
 
 	"govchain/docs"
 	datasetsmodulekeeper "govchain/x/datasets/keeper"
+	infrastructuremodulekeeper "govchain/x/infrastructure/keeper"
+	procurementmodulekeeper "govchain/x/procurement/keeper"
 )
 
 const (
@@ -99,8 +101,10 @@ type App struct {
 	TransferKeeper      ibctransferkeeper.Keeper
 
 	// simulation manager
-	sm             *module.SimulationManager
-	DatasetsKeeper datasetsmodulekeeper.Keeper
+	sm                   *module.SimulationManager
+	DatasetsKeeper       datasetsmodulekeeper.Keeper
+	ProcurementKeeper    procurementmodulekeeper.Keeper
+	InfrastructureKeeper infrastructuremodulekeeper.Keeper
 }
 
 func init() {
@@ -174,6 +178,8 @@ func New(
 		&app.CircuitBreakerKeeper,
 		&app.ParamsKeeper,
 		&app.DatasetsKeeper,
+		&app.ProcurementKeeper,
+		&app.InfrastructureKeeper,
 	); err != nil {
 		panic(err)
 	}

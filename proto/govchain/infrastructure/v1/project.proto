@@ -1,0 +1,75 @@
+syntax = "proto3";
+package govchain.infrastructure.v1;
+
+option go_package = "govchain/x/infrastructure/types";
+
+import "google/protobuf/timestamp.proto";
+import "govchain/infrastructure/v1/common.proto";
+
+// ============================================================================
+// OC4IDS Project Schema → Protobuf
+// Reference: https://standard.open-contracting.org/infrastructure/latest/en/reference/schema/
+// ============================================================================
+
+// InfraProject - The core OC4IDS data object representing an infrastructure project.
+// On-chain, each project is a stateful object that evolves over time.
+message InfraProject {
+  // --- Project Identification ---
+  string id = 1;                    // Globally unique project ID (e.g. "ph-dpwh-21NA0052")
+  google.protobuf.Timestamp updated = 2;
+  string language = 3;              // ISO 639-1 (default: "en")
+
+  // --- Identifiers ---
+  repeated Identifier identifiers = 4;
+
+  // --- Public Authority ---
+  OrganizationReference public_authority = 5;
+
+  // --- Project Details ---
+  string title = 6;
+  string description = 7;
+  string status = 8;               // identification, preparation, implementation, completion, cancelled
+  string type = 9;                  // construction, rehabilitation, replacement, expansion, maintenance, decommissioning
+  repeated string sector = 10;     // transport, transport.road, water, water.floodControl, buildings, multiSector, etc.
+  string purpose = 11;             // Socioeconomic purpose
+
+  // --- Classifications ---
+  repeated Classification additional_classifications = 12;
+
+  // --- Budget ---
+  Budget budget = 13;
+
+  // --- Period ---
+  Period period = 14;
+
+  // --- Locations ---
+  repeated Location locations = 15;
+
+  // --- Parties ---
+  repeated Organization parties = 16;
+
+  // --- Metrics ---
+  repeated Metric metrics = 17;
+
+  // --- Documents ---
+  repeated Document documents = 18;
+
+  // --- Contracting Processes ---
+  repeated ContractingProcessSummary contracting_processes = 19;
+
+  // --- Related Projects ---
+  repeated RelatedProject related_projects = 20;
+
+  // --- Completion ---
+  Completion completion = 21;
+
+  // === On-chain Extensions ===
+  string publisher_address = 22;    // Cosmos account that submitted/last updated this project
+  string block_height = 23;         // Block in which this project was last updated
+  string tx_hash = 24;              // Transaction hash for verification
+  google.protobuf.Timestamp chain_timestamp = 25;
+  string owner = 26;                // Cosmos address of the project creator
+  repeated string authorized_publishers = 27; // Addresses allowed to update this project
+  uint64 created_at_block = 28;
+  uint64 updated_at_block = 29;
+}

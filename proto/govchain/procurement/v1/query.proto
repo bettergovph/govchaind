@@ -1,0 +1,183 @@
+syntax = "proto3";
+
+package govchain.procurement.v1;
+
+import "amino/amino.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "govchain/procurement/v1/params.proto";
+import "govchain/procurement/v1/release.proto";
+import "govchain/procurement/v1/common.proto";
+import "govchain/procurement/v1/genesis.proto";
+
+option go_package = "govchain/x/procurement/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // Parameters queries the parameters of the module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/govchain/procurement/v1/params";
+  }
+
+  // GetRelease gets a specific release by OCID and release ID.
+  rpc GetRelease(QueryGetReleaseRequest) returns (QueryGetReleaseResponse) {
+    option (google.api.http).get = "/govchain/procurement/v1/release/{ocid}/{release_id}";
+  }
+
+  // ListReleases lists all releases for a contracting process.
+  rpc ListReleases(QueryListReleasesRequest) returns (QueryListReleasesResponse) {
+    option (google.api.http).get = "/govchain/procurement/v1/releases/{ocid}";
+  }
+
+  // GetProcess gets the compiled contracting process by OCID.
+  rpc GetProcess(QueryGetProcessRequest) returns (QueryGetProcessResponse) {
+    option (google.api.http).get = "/govchain/procurement/v1/process/{ocid}";
+  }
+
+  // ListProcesses lists all contracting processes.
+  rpc ListProcesses(QueryListProcessesRequest) returns (QueryListProcessesResponse) {
+    option (google.api.http).get = "/govchain/procurement/v1/process";
+  }
+
+  // GetEntity gets a registered entity by ID.
+  rpc GetEntity(QueryGetEntityRequest) returns (QueryGetEntityResponse) {
+    option (google.api.http).get = "/govchain/procurement/v1/entity/{entity_id}";
+  }
+
+  // ListEntities lists registered entities.
+  rpc ListEntities(QueryListEntitiesRequest) returns (QueryListEntitiesResponse) {
+    option (google.api.http).get = "/govchain/procurement/v1/entity";
+  }
+
+  // SearchTenders searches active tenders with filters.
+  rpc SearchTenders(QuerySearchTendersRequest) returns (QuerySearchTendersResponse) {
+    option (google.api.http).get = "/govchain/procurement/v1/tenders";
+  }
+
+  // GetOCDSPackage gets an OCDS-compliant release package for API compatibility.
+  rpc GetOCDSPackage(QueryGetOCDSPackageRequest) returns (QueryGetOCDSPackageResponse) {
+    option (google.api.http).get = "/govchain/procurement/v1/ocds/releases/{ocid}";
+  }
+
+  // GetRecordPackage gets an OCDS-compliant record package.
+  rpc GetRecordPackage(QueryGetRecordPackageRequest) returns (QueryGetRecordPackageResponse) {
+    option (google.api.http).get = "/govchain/procurement/v1/ocds/records/{ocid}";
+  }
+}
+
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params holds all the parameters of this module.
+  Params params = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+}
+
+// QueryGetReleaseRequest defines the request for getting a specific release.
+message QueryGetReleaseRequest {
+  string ocid = 1;
+  string release_id = 2;
+}
+
+// QueryGetReleaseResponse defines the response for getting a specific release.
+message QueryGetReleaseResponse {
+  Release release = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryListReleasesRequest defines the request for listing releases.
+message QueryListReleasesRequest {
+  string ocid = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryListReleasesResponse defines the response for listing releases.
+message QueryListReleasesResponse {
+  repeated Release releases = 1 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryGetProcessRequest defines the request for getting a contracting process.
+message QueryGetProcessRequest {
+  string ocid = 1;
+}
+
+// QueryGetProcessResponse defines the response for getting a contracting process.
+message QueryGetProcessResponse {
+  ContractingProcess process = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryListProcessesRequest defines the request for listing contracting processes.
+message QueryListProcessesRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryListProcessesResponse defines the response for listing contracting processes.
+message QueryListProcessesResponse {
+  repeated ContractingProcess processes = 1 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryGetEntityRequest defines the request for getting a registered entity.
+message QueryGetEntityRequest {
+  string entity_id = 1;
+}
+
+// QueryGetEntityResponse defines the response for getting a registered entity.
+message QueryGetEntityResponse {
+  EntityRegistry entity = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryListEntitiesRequest defines the request for listing entities.
+message QueryListEntitiesRequest {
+  string role = 1; // Optional filter by role (buyer, supplier, etc.)
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryListEntitiesResponse defines the response for listing entities.
+message QueryListEntitiesResponse {
+  repeated EntityRegistry entities = 1 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QuerySearchTendersRequest defines the request for searching tenders.
+message QuerySearchTendersRequest {
+  string status = 1;
+  string procurement_method = 2;
+  string main_procurement_category = 3;
+  string procuring_entity_id = 4;
+  cosmos.base.query.v1beta1.PageRequest pagination = 5;
+}
+
+// QuerySearchTendersResponse defines the response for searching tenders.
+message QuerySearchTendersResponse {
+  repeated ContractingProcess processes = 1 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryGetOCDSPackageRequest defines the request for getting an OCDS release package.
+message QueryGetOCDSPackageRequest {
+  string ocid = 1;
+}
+
+// QueryGetOCDSPackageResponse defines the response for getting an OCDS release package.
+message QueryGetOCDSPackageResponse {
+  ReleasePackage package = 1;
+}
+
+// QueryGetRecordPackageRequest defines the request for getting an OCDS record package.
+message QueryGetRecordPackageRequest {
+  string ocid = 1;
+}
+
+// QueryGetRecordPackageResponse defines the response for getting an OCDS record package.
+message QueryGetRecordPackageResponse {
+  repeated Record records = 1;
+  Publisher publisher = 2;
+  string version = 3;
+  string license = 4;
+}

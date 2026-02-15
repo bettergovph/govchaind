@@ -1,0 +1,201 @@
+syntax = "proto3";
+package govchain.infrastructure.v1;
+
+option go_package = "govchain/x/infrastructure/types";
+
+import "google/protobuf/timestamp.proto";
+
+// ============================================================================
+// OC4IDS Common Building Blocks
+// Reference: https://standard.open-contracting.org/infrastructure/latest/en/reference/schema/
+// ============================================================================
+
+// Value - Financial values with currency (ISO 4217)
+message Value {
+  string amount = 1;   // Use string for precise decimal representation on-chain
+  string currency = 2; // ISO 4217 currency code, default PHP
+}
+
+// Period - A time period with start/end dates
+message Period {
+  google.protobuf.Timestamp start_date = 1;
+  google.protobuf.Timestamp end_date = 2;
+  google.protobuf.Timestamp max_extent_date = 3;
+  int32 duration_in_days = 4;
+}
+
+// Identifier - Entity identification
+message Identifier {
+  string scheme = 1;     // e.g. "PH-DPWH", "PH-SEC"
+  string id = 2;
+  string legal_name = 3;
+  string uri = 4;
+}
+
+// Address - Physical/postal address
+message Address {
+  string street_address = 1;
+  string locality = 2;
+  string region = 3;
+  string postal_code = 4;
+  string country_name = 5;
+}
+
+// ContactPoint - Contact details
+message ContactPoint {
+  string name = 1;
+  string email = 2;
+  string telephone = 3;
+  string fax_number = 4;
+  string url = 5;
+}
+
+// Classification - Project classification
+message Classification {
+  string scheme = 1;
+  string id = 2;
+  string description = 3;
+  string uri = 4;
+}
+
+// Location - Geographic location of the infrastructure project
+message Location {
+  string id = 1;
+  string description = 2;
+  string region = 3;
+  string locality = 4;
+  Address address = 5;
+  Geometry geometry = 6;
+  Gazetteer gazetteer = 7;
+  string uri = 8;
+}
+
+// Geometry - GeoJSON geometry object
+message Geometry {
+  string type = 1;  // Point, LineString, Polygon, etc.
+  // Coordinates stored as JSON string for flexibility with nested arrays
+  string coordinates = 2;
+}
+
+// Gazetteer - Reference to a geographic gazetteer
+message Gazetteer {
+  string scheme = 1;
+  repeated string identifiers = 2;
+}
+
+// Organization - Party involved in the project
+message Organization {
+  string id = 1;
+  string name = 2;
+  Identifier identifier = 3;
+  repeated Identifier additional_identifiers = 4;
+  Address address = 5;
+  ContactPoint contact_point = 6;
+  repeated string roles = 7; // publicAuthority, procuringEntity, buyer, supplier, tenderer, constructionCompany, etc.
+
+  // On-chain extension
+  string on_chain_address = 8;
+  bool is_verified = 9;
+}
+
+// OrganizationReference - Cross-reference to parties section
+message OrganizationReference {
+  string id = 1;
+  string name = 2;
+}
+
+// Document - Attached documents
+message Document {
+  string id = 1;
+  string document_type = 2; // tenderNotice, awardNotice, contractSigned, noticeToProceed, projectPhoto, videoMedia, etc.
+  string title = 3;
+  string description = 4;
+  string url = 5;
+  google.protobuf.Timestamp date_published = 6;
+  google.protobuf.Timestamp date_modified = 7;
+  string format = 8;
+  string language = 9;
+
+  // On-chain extension
+  string content_hash = 10;
+  string content_hash_method = 11;
+  string ipfs_cid = 12;
+}
+
+// Metric - Quantitative measure of project performance
+message Metric {
+  string id = 1;          // e.g. "physicalProgress", "actualExpenditure"
+  string title = 2;
+  string description = 3;
+  repeated Observation observations = 4;
+}
+
+// Observation - A single measurement of a metric
+message Observation {
+  string id = 1;
+  Period period = 2;
+  string measure = 3;     // Numeric value as string for precision
+  Value value = 4;         // Monetary value if applicable
+  Unit unit = 5;
+  map<string, string> dimensions = 6;
+  string notes = 7;
+}
+
+// Unit - Unit of measurement
+message Unit {
+  string name = 1;     // e.g. "percent", "kilometers"
+  string scheme = 2;   // e.g. "UNCEFACT"
+  string id = 3;
+  Value value = 4;
+  string uri = 5;
+}
+
+// Completion - Information provided at project completion
+message Completion {
+  google.protobuf.Timestamp end_date = 1;
+  string end_date_details = 2;
+  Value final_value = 3;
+  string final_value_details = 4;
+}
+
+// RelatedProject - Reference to related infrastructure projects
+message RelatedProject {
+  string id = 1;
+  string relationship = 2; // parent, child, component, prior, related
+  string title = 3;
+  string scheme = 4;
+  string uri = 5;
+}
+
+// Budget - Project budget information
+message Budget {
+  string description = 1;
+  Value amount = 2;
+  google.protobuf.Timestamp approval_date = 3;
+}
+
+// ContractingProcessSummary - Summary of a contracting process linked to the project
+message ContractingProcessSummary {
+  string id = 1;
+  string ocid = 2;       // OCDS process ID, links to x/procurement
+  string title = 3;
+  string description = 4;
+  string status = 5;
+  TenderSummary tender = 6;
+  repeated ContractSummary contracts = 7;
+  string source_system = 8; // e.g. "PhilGEPS"
+}
+
+// TenderSummary - Summary tender info within a contracting process
+message TenderSummary {
+  Period tender_period = 1;
+  string procurement_method = 2;
+  Value value = 3;
+}
+
+// ContractSummary - Summary contract info within a contracting process
+message ContractSummary {
+  string id = 1;
+  google.protobuf.Timestamp date_signed = 2;
+  Value value = 3;
+}

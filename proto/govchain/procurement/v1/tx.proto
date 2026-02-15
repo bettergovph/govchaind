@@ -1,0 +1,175 @@
+syntax = "proto3";
+
+package govchain.procurement.v1;
+
+import "amino/amino.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "govchain/procurement/v1/params.proto";
+import "govchain/procurement/v1/release.proto";
+import "govchain/procurement/v1/common.proto";
+
+option go_package = "govchain/x/procurement/types";
+
+// Msg defines the Msg service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // UpdateParams defines a (governance) operation for updating the module
+  // parameters. The authority defaults to the x/gov module account.
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+
+  // SubmitRelease submits a full OCDS release to the chain.
+  // This is the primary transaction for publishing procurement data.
+  rpc SubmitRelease(MsgSubmitRelease) returns (MsgSubmitReleaseResponse);
+
+  // RegisterEntity registers an organization on-chain.
+  // Must be done before an org can participate in procurement.
+  rpc RegisterEntity(MsgRegisterEntity) returns (MsgRegisterEntityResponse);
+
+  // UpdateEntity updates organization details.
+  rpc UpdateEntity(MsgUpdateEntity) returns (MsgUpdateEntityResponse);
+
+  // CreateProcess initiates a new contracting process (planning stage).
+  rpc CreateProcess(MsgCreateProcess) returns (MsgCreateProcessResponse);
+
+  // PublishTender publishes a tender for an existing contracting process.
+  rpc PublishTender(MsgPublishTender) returns (MsgPublishTenderResponse);
+
+  // SubmitAward records an award decision.
+  rpc SubmitAward(MsgSubmitAward) returns (MsgSubmitAwardResponse);
+
+  // SignContract records a contract signing.
+  rpc SignContract(MsgSignContract) returns (MsgSignContractResponse);
+
+  // UpdateImplementation records implementation progress.
+  rpc UpdateImplementation(MsgUpdateImplementation) returns (MsgUpdateImplementationResponse);
+}
+
+// MsgUpdateParams is the Msg/UpdateParams request type.
+message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "govchain/x/procurement/MsgUpdateParams";
+
+  // authority is the address that controls the module (defaults to x/gov unless overwritten).
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // params defines the module parameters to update.
+  // NOTE: All parameters must be supplied.
+  Params params = 2 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+}
+
+// MsgUpdateParamsResponse defines the response structure for executing a
+// MsgUpdateParams message.
+message MsgUpdateParamsResponse {}
+
+// --- Release Submission ---
+
+// MsgSubmitRelease submits an OCDS release to the chain.
+message MsgSubmitRelease {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  Release release = 2;
+}
+
+message MsgSubmitReleaseResponse {
+  string ocid = 1;
+  string release_id = 2;
+  uint64 block_height = 3;
+  string tx_hash = 4;
+}
+
+// --- Entity Registration ---
+
+// MsgRegisterEntity registers an organization on-chain.
+message MsgRegisterEntity {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  Organization organization = 2;
+}
+
+message MsgRegisterEntityResponse {
+  string entity_id = 1;
+}
+
+// MsgUpdateEntity updates organization details.
+message MsgUpdateEntity {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string entity_id = 2;
+  Organization organization = 3;
+}
+
+message MsgUpdateEntityResponse {}
+
+// --- Lifecycle Stage Messages ---
+
+// MsgCreateProcess initiates a new contracting process (planning stage).
+message MsgCreateProcess {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string ocid = 2;
+  OrganizationReference buyer = 3;
+  Planning planning = 4;
+  repeated Organization parties = 5;
+}
+
+message MsgCreateProcessResponse {
+  string ocid = 1;
+}
+
+// MsgPublishTender publishes a tender for an existing contracting process.
+message MsgPublishTender {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string ocid = 2;
+  Tender tender = 3;
+  repeated Organization additional_parties = 4;
+}
+
+message MsgPublishTenderResponse {
+  string ocid = 1;
+  string tender_id = 2;
+}
+
+// MsgSubmitAward records an award decision.
+message MsgSubmitAward {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string ocid = 2;
+  Award award = 3;
+  repeated Organization additional_parties = 4;
+}
+
+message MsgSubmitAwardResponse {
+  string ocid = 1;
+  string award_id = 2;
+}
+
+// MsgSignContract records a contract signing.
+message MsgSignContract {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string ocid = 2;
+  Contract contract = 3;
+}
+
+message MsgSignContractResponse {
+  string ocid = 1;
+  string contract_id = 2;
+}
+
+// MsgUpdateImplementation records implementation progress.
+message MsgUpdateImplementation {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string ocid = 2;
+  string contract_id = 3;
+  Implementation implementation = 4;
+}
+
+message MsgUpdateImplementationResponse {}

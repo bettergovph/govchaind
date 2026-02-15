@@ -1,0 +1,128 @@
+syntax = "proto3";
+
+package govchain.procurement.v1;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+import "govchain/procurement/v1/params.proto";
+import "govchain/procurement/v1/release.proto";
+import "govchain/procurement/v1/common.proto";
+
+option go_package = "govchain/x/procurement/types";
+
+// ContractingProcess - The on-chain aggregate for a single OCID
+// This is the compiled state derived from all releases
+message ContractingProcess {
+  string ocid = 1;
+
+  // Current compiled state
+  Release compiled_release = 2;
+
+  // Index of all release IDs for this process (for history traversal)
+  repeated string release_ids = 3;
+
+  // Lifecycle tracking
+  string current_stage = 4; // planning, tender, award, contract, implementation
+  string current_status = 5;
+
+  // Authorization
+  string owner = 6;  // Cosmos address of the process creator
+  repeated string authorized_publishers = 7; // Addresses allowed to submit releases
+
+  // Metadata
+  uint64 created_at_block = 8;
+  uint64 updated_at_block = 9;
+}
+
+// EntityRegistry - On-chain registry of verified organizations
+message EntityRegistry {
+  string entity_id = 1;
+  Organization organization = 2;
+  string registrar = 3;  // Cosmos address that registered this entity
+  uint64 registered_at_block = 4;
+  bool active = 5;
+}
+
+// OCIDRegistry - Tracks OCID prefix allocations
+message OCIDRegistry {
+  string prefix = 1;       // e.g. "ocds-ph-dbm" for DBM Philippines
+  string owner = 2;        // Cosmos address that owns this prefix
+  string description = 3;  // Human-readable description
+  uint64 registered_at_block = 4;
+}
+
+// GenesisState defines the procurement module's genesis state.
+message GenesisState {
+  // params defines all the parameters of the module.
+  Params params = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  repeated ContractingProcess process_list = 2 [(gogoproto.nullable) = false];
+  uint64 process_count = 3;
+  repeated EntityRegistry entity_list = 4 [(gogoproto.nullable) = false];
+  uint64 entity_count = 5;
+  repeated Release release_list = 6 [(gogoproto.nullable) = false];
+  uint64 release_count = 7;
+}
+
+// ============================================================================
+// Events (emitted by the module for indexing)
+// ============================================================================
+
+message EventReleaseSubmitted {
+  string ocid = 1;
+  string release_id = 2;
+  string publisher = 3;
+  string stage = 4;      // planning, tender, award, contract, implementation
+  string tag = 5;        // Primary release tag
+}
+
+message EventTenderPublished {
+  string ocid = 1;
+  string tender_id = 2;
+  string procurement_method = 3;
+  string procurement_category = 4;
+  string value_amount = 5;
+  string value_currency = 6;
+  string procuring_entity_id = 7;
+}
+
+message EventAwardMade {
+  string ocid = 1;
+  string award_id = 2;
+  string value_amount = 3;
+  string value_currency = 4;
+  repeated string supplier_ids = 5;
+}
+
+message EventContractSigned {
+  string ocid = 1;
+  string contract_id = 2;
+  string award_id = 3;
+  string value_amount = 4;
+  string value_currency = 5;
+}
+
+message EventTransactionRecorded {
+  string ocid = 1;
+  string contract_id = 2;
+  string transaction_id = 3;
+  string value_amount = 4;
+  string value_currency = 5;
+  string payer_id = 6;
+  string payee_id = 7;
+}
+
+message EventMilestoneUpdated {
+  string ocid = 1;
+  string milestone_id = 2;
+  string status = 3;
+  string section = 4;
+}
+
+message EventEntityRegistered {
+  string entity_id = 1;
+  string name = 2;
+  string registrar = 3;
+}

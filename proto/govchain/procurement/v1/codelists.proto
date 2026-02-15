@@ -1,0 +1,168 @@
+syntax = "proto3";
+package govchain.procurement.v1;
+
+option go_package = "govchain/x/procurement/types";
+
+// ============================================================================
+// OCDS Codelists → Protobuf Enums
+// Reference: https://standard.open-contracting.org/latest/en/schema/codelists/
+//
+// CLOSED codelists are enforced as enums (values MUST be from this list)
+// OPEN codelists are documented here but stored as strings in the schema
+// to allow extension without breaking changes
+// ============================================================================
+
+// --- CLOSED CODELISTS (enforced on-chain) ---
+
+// ReleaseTag - Type of release
+// Used in: Release.tag
+enum ReleaseTag {
+  RELEASE_TAG_UNSPECIFIED = 0;
+  RELEASE_TAG_PLANNING = 1;
+  RELEASE_TAG_PLANNING_UPDATE = 2;
+  RELEASE_TAG_TENDER = 3;
+  RELEASE_TAG_TENDER_AMENDMENT = 4;
+  RELEASE_TAG_TENDER_UPDATE = 5;
+  RELEASE_TAG_TENDER_CANCELLATION = 6;
+  RELEASE_TAG_AWARD = 7;
+  RELEASE_TAG_AWARD_UPDATE = 8;
+  RELEASE_TAG_AWARD_CANCELLATION = 9;
+  RELEASE_TAG_CONTRACT = 10;
+  RELEASE_TAG_CONTRACT_UPDATE = 11;
+  RELEASE_TAG_CONTRACT_AMENDMENT = 12;
+  RELEASE_TAG_IMPLEMENTATION = 13;
+  RELEASE_TAG_IMPLEMENTATION_UPDATE = 14;
+  RELEASE_TAG_COMPILED = 15;
+}
+
+// InitiationType - How the contracting process was initiated
+// Used in: Release.initiation_type
+enum InitiationType {
+  INITIATION_TYPE_UNSPECIFIED = 0;
+  INITIATION_TYPE_TENDER = 1;
+}
+
+// TenderStatus - Current status of the tender
+// Used in: Tender.status
+enum TenderStatus {
+  TENDER_STATUS_UNSPECIFIED = 0;
+  TENDER_STATUS_PLANNING = 1;
+  TENDER_STATUS_PLANNED = 2;
+  TENDER_STATUS_ACTIVE = 3;
+  TENDER_STATUS_CANCELLED = 4;
+  TENDER_STATUS_UNSUCCESSFUL = 5;
+  TENDER_STATUS_COMPLETE = 6;
+  TENDER_STATUS_WITHDRAWN = 7;
+}
+
+// ProcurementMethod - Procedure used for procurement
+// Used in: Tender.procurement_method
+// Based on WTO Government Procurement Agreement definitions
+enum ProcurementMethod {
+  PROCUREMENT_METHOD_UNSPECIFIED = 0;
+  PROCUREMENT_METHOD_OPEN = 1;       // All interested suppliers may submit a tender
+  PROCUREMENT_METHOD_SELECTIVE = 2;  // Only qualified suppliers are invited
+  PROCUREMENT_METHOD_LIMITED = 3;    // Procuring entity contacts supplier(s) of its choice
+  PROCUREMENT_METHOD_DIRECT = 4;     // Contract awarded without competition
+}
+
+// ProcurementCategory - Primary object category
+// Used in: Tender.main_procurement_category
+enum ProcurementCategory {
+  PROCUREMENT_CATEGORY_UNSPECIFIED = 0;
+  PROCUREMENT_CATEGORY_GOODS = 1;
+  PROCUREMENT_CATEGORY_WORKS = 2;
+  PROCUREMENT_CATEGORY_SERVICES = 3;
+}
+
+// AwardStatus - Status of an award
+// Used in: Award.status
+enum AwardStatus {
+  AWARD_STATUS_UNSPECIFIED = 0;
+  AWARD_STATUS_PENDING = 1;
+  AWARD_STATUS_ACTIVE = 2;
+  AWARD_STATUS_CANCELLED = 3;
+  AWARD_STATUS_UNSUCCESSFUL = 4;
+}
+
+// ContractStatus - Status of a contract
+// Used in: Contract.status
+enum ContractStatus {
+  CONTRACT_STATUS_UNSPECIFIED = 0;
+  CONTRACT_STATUS_PENDING = 1;
+  CONTRACT_STATUS_ACTIVE = 2;
+  CONTRACT_STATUS_CANCELLED = 3;
+  CONTRACT_STATUS_TERMINATED = 4;
+}
+
+// MilestoneStatus - Status of a milestone
+// Used in: Milestone.status
+enum MilestoneStatus {
+  MILESTONE_STATUS_UNSPECIFIED = 0;
+  MILESTONE_STATUS_SCHEDULED = 1;
+  MILESTONE_STATUS_MET = 2;
+  MILESTONE_STATUS_NOT_MET = 3;
+  MILESTONE_STATUS_PARTIALLY_MET = 4;
+}
+
+// Currency - ISO 4217 currency codes (subset relevant to Philippines/BetterGov)
+// Full list: https://standard.open-contracting.org/latest/en/schema/codelists/#currency
+// Note: In practice, store as string and validate against full ISO 4217 list
+enum Currency {
+  CURRENCY_UNSPECIFIED = 0;
+  CURRENCY_PHP = 1;  // Philippine Peso
+  CURRENCY_USD = 2;  // US Dollar
+  CURRENCY_EUR = 3;  // Euro
+  CURRENCY_GBP = 4;  // British Pound
+  CURRENCY_JPY = 5;  // Japanese Yen
+  CURRENCY_CNY = 6;  // Chinese Yuan
+  CURRENCY_KRW = 7;  // South Korean Won
+  CURRENCY_SGD = 8;  // Singapore Dollar
+  CURRENCY_AUD = 9;  // Australian Dollar
+}
+
+// --- OPEN CODELISTS (documented, stored as strings, validated off-chain) ---
+
+// PartyRole - Open codelist for organization roles
+// Values include: buyer, procuringEntity, supplier, tenderer, funder,
+//   enquirer, payer, payee, reviewBody, interestedParty
+// Stored as string in Organization.roles
+
+// DocumentType - Open codelist for document classification
+// Values include: tenderNotice, awardNotice, contractNotice, completionCertificate,
+//   procurementPlan, biddingDocuments, technicalSpecifications, evaluationCriteria,
+//   evaluationReports, contractDraft, contractSigned, contractArrangements,
+//   contractSchedule, physicalProgressReport, financialProgressReport, ...
+// Stored as string in Document.document_type
+
+// AwardCriteria - Open codelist
+// Values include: priceOnly, costOnly, qualityOnly, ratedCriteria,
+//   lowestCost, bestProposal, bestValueToGovernment, singleBidOnly
+// Stored as string in Tender.award_criteria
+
+// SubmissionMethod - Open codelist
+// Values include: electronicSubmission, electronicAuction, written, inPerson
+// Stored as string in Tender.submission_method
+
+// MilestoneType - Open codelist
+// Values include: preProcurement, approval, engagement, assessment,
+//   delivery, reporting, financing
+// Stored as string in Milestone.type
+
+// RelatedProcessRelationship - Open codelist
+// Values include: framework, planning, parent, prior, unsuccessfulProcess,
+//   subContract, renewalOrReplacement
+// Stored as string in RelatedProcess.relationship
+
+// ItemClassificationScheme - Open codelist
+// Values include: CPV, CPVS, GSIN, UNSPSC, CPC, OKDP, OKPD, cucop
+// Stored as string in Classification.scheme
+
+// UnitClassificationScheme - Open codelist
+// Values include: UNCEFACT, QUDT
+// Stored as string in Unit.scheme
+
+// OrganizationIdentifierScheme - references org-id.guide
+// For Philippines: PH-SEC (SEC registration), PH-DTI (DTI registration),
+//   PH-PhilGEPS (PhilGEPS supplier number)
+// Stored as string in Identifier.scheme

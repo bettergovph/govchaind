@@ -2,6 +2,8 @@ validation: sovereign
 version: 1
 build:
     main: ./cmd/govchaind
+    ldflags:
+        - "-checklinkname=0"
     proto:
         path: ""
 accounts:

@@ -1,0 +1,185 @@
+syntax = "proto3";
+package govchain.procurement.v1;
+
+option go_package = "govchain/x/procurement/types";
+
+import "google/protobuf/timestamp.proto";
+import "govchain/procurement/v1/common.proto";
+
+// ============================================================================
+// OCDS Release Schema → Protobuf
+// Maps: https://standard.open-contracting.org/latest/en/schema/reference/
+// ============================================================================
+
+// Release - The core OCDS data object. Each release represents a snapshot
+// of information about a contracting process at a point in time.
+// On-chain, each Release is an immutable transaction.
+message Release {
+  // --- Release Metadata ---
+  string ocid = 1;               // Open Contracting ID (globally unique: prefix + local id)
+  string id = 2;                  // Release ID (unique within OCID scope)
+  google.protobuf.Timestamp date = 3;
+  repeated string tag = 4;       // Closed codelist: releaseTag
+  string initiation_type = 5;    // Closed codelist: initiationType (tender)
+  string language = 6;            // BCP47 / ISO 639-1
+
+  // --- Parties ---
+  repeated Organization parties = 7;
+  OrganizationReference buyer = 8;
+
+  // --- Process Sections ---
+  Planning planning = 9;
+  Tender tender = 10;
+  repeated Award awards = 11;
+  repeated Contract contracts = 12;
+
+  // --- Related Processes ---
+  repeated RelatedProcess related_processes = 13;
+
+  // === On-chain Extensions ===
+  string publisher_address = 14;   // Cosmos account that submitted this release
+  string block_height = 15;        // Block in which this release was recorded
+  string tx_hash = 16;             // Transaction hash for verification
+  google.protobuf.Timestamp chain_timestamp = 17; // On-chain timestamp
+}
+
+// Planning - Background information for the contracting process
+message Planning {
+  string rationale = 1;
+  Budget budget = 2;
+  repeated Document documents = 3;
+  repeated Milestone milestones = 4;
+}
+
+// Tender - Details of the procurement process
+message Tender {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+
+  // Status: closed codelist (planning, planned, active, cancelled, unsuccessful, complete, withdrawn)
+  string status = 4;
+
+  OrganizationReference procuring_entity = 5;
+  repeated Item items = 6;
+
+  Value value = 7;       // Total upper estimated value
+  Value min_value = 8;   // Minimum estimated value
+
+  // Procurement method: closed codelist (open, selective, limited, direct)
+  string procurement_method = 9;
+  string procurement_method_details = 10;
+  string procurement_method_rationale = 11;
+
+  // Category: closed codelist (goods, works, services)
+  string main_procurement_category = 12;
+  repeated string additional_procurement_categories = 13;
+
+  // Award criteria: open codelist
+  string award_criteria = 14;
+  string award_criteria_details = 15;
+
+  // Submission: open codelist
+  repeated string submission_method = 16;
+  string submission_method_details = 17;
+
+  // Time periods
+  Period tender_period = 18;
+  Period enquiry_period = 19;
+  bool has_enquiries = 20;
+  string eligibility_criteria = 21;
+  Period award_period = 22;
+  Period contract_period = 23;
+
+  // Participants
+  int32 number_of_tenderers = 24;
+  repeated OrganizationReference tenderers = 25;
+
+  // Supporting information
+  repeated Document documents = 26;
+  repeated Milestone milestones = 27;
+  repeated Amendment amendments = 28;
+}
+
+// Award - Information about contract awards
+message Award {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+
+  // Status: closed codelist (pending, active, cancelled, unsuccessful)
+  string status = 4;
+
+  google.protobuf.Timestamp date = 5;
+  Value value = 6;
+  repeated OrganizationReference suppliers = 7;
+  repeated Item items = 8;
+  Period contract_period = 9;
+  repeated Document documents = 10;
+  repeated Amendment amendments = 11;
+}
+
+// Contract - Details of contracts entered into
+message Contract {
+  string id = 1;
+  string award_id = 2; // Must reference an Award.id
+  string title = 3;
+  string description = 4;
+
+  // Status: closed codelist (pending, active, cancelled, terminated)
+  string status = 5;
+
+  Period period = 6;
+  Value value = 7;
+  repeated Item items = 8;
+  google.protobuf.Timestamp date_signed = 9;
+  repeated Document documents = 10;
+  Implementation implementation = 11;
+  repeated RelatedProcess related_processes = 12;
+  repeated Milestone milestones = 13;
+  repeated Amendment amendments = 14;
+}
+
+// Implementation - Progress tracking for contract execution
+message Implementation {
+  repeated Transaction transactions = 1;
+  repeated Milestone milestones = 2;
+  repeated Document documents = 3;
+}
+
+// ============================================================================
+// Release Package - Envelope for publishing one or more releases
+// (Used primarily for API responses, not necessarily stored on-chain)
+// ============================================================================
+message ReleasePackage {
+  string uri = 1;
+  string version = 2;  // OCDS schema version, e.g. "1.1"
+  repeated string extensions = 3;
+  google.protobuf.Timestamp published_date = 4;
+  repeated Release releases = 5;
+  Publisher publisher = 6;
+  string license = 7;
+  string publication_policy = 8;
+}
+
+// Publisher - Data publisher identification
+message Publisher {
+  string name = 1;
+  string scheme = 2;
+  string uid = 3;
+  string uri = 4;
+}
+
+// Record - Compiled view of a contracting process (all releases merged)
+message Record {
+  string ocid = 1;
+  repeated LinkedRelease releases = 2;
+  Release compiled_release = 3;
+}
+
+// LinkedRelease - Reference to a release within a record
+message LinkedRelease {
+  string url = 1;
+  google.protobuf.Timestamp date = 2;
+  repeated string tag = 3;
+}

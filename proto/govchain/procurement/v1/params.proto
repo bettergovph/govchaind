@@ -1,0 +1,33 @@
+syntax = "proto3";
+package govchain.procurement.v1;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "govchain/x/procurement/types";
+
+// Params defines the parameters for the procurement module.
+// Aligned with Republic Act 9184 (Government Procurement Reform Act).
+message Params {
+  option (amino.name) = "govchain/x/procurement/Params";
+  option (gogoproto.equal) = true;
+
+  // Allowed OCID prefixes (governance-approved publishers)
+  repeated string allowed_ocid_prefixes = 1;
+
+  // Maximum release size in bytes (prevent spam)
+  uint64 max_release_size = 2;
+
+  // Whether entity registration requires governance approval
+  bool require_entity_verification = 3;
+
+  // Default currency for Philippine procurement
+  string default_currency = 4;
+
+  // Minimum number of tenderers for open procurement
+  int32 min_tenderers_open = 5;
+
+  // Philippine-specific: RA 9184 thresholds for procurement methods
+  string alternative_method_threshold = 6;  // Amount threshold for alternative methods
+  string public_bidding_threshold = 7;       // Amount requiring public bidding
+}

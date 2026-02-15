@@ -3,6 +3,10 @@ package app
 import (
 	_ "govchain/x/datasets/module"
 	datasetsmoduletypes "govchain/x/datasets/types"
+	_ "govchain/x/infrastructure/module"
+	infrastructuremoduletypes "govchain/x/infrastructure/types"
+	_ "govchain/x/procurement/module"
+	procurementmoduletypes "govchain/x/procurement/types"
 	"time"
 
 	runtimev1alpha1 "cosmossdk.io/api/cosmos/app/runtime/v1alpha1"
@@ -126,6 +130,8 @@ var (
 						ibcexported.ModuleName,
 						// chain modules
 						datasetsmoduletypes.ModuleName,
+						procurementmoduletypes.ModuleName,
+						infrastructuremoduletypes.ModuleName,
 						// this line is used by starport scaffolding # stargate/app/beginBlockers
 					},
 					EndBlockers: []string{
@@ -135,6 +141,8 @@ var (
 						group.ModuleName,
 						// chain modules
 						datasetsmoduletypes.ModuleName,
+						procurementmoduletypes.ModuleName,
+						infrastructuremoduletypes.ModuleName,
 						// this line is used by starport scaffolding # stargate/app/endBlockers
 					},
 					// The following is mostly only needed when ModuleName != StoreKey name.
@@ -172,6 +180,8 @@ var (
 						icatypes.ModuleName,
 						// chain modules
 						datasetsmoduletypes.ModuleName,
+						procurementmoduletypes.ModuleName,
+						infrastructuremoduletypes.ModuleName,
 						// this line is used by starport scaffolding # stargate/app/initGenesis
 					},
 				}),
@@ -271,6 +281,14 @@ var (
 			{
 				Name:   datasetsmoduletypes.ModuleName,
 				Config: appconfig.WrapAny(&datasetsmoduletypes.Module{}),
+			},
+			{
+				Name:   procurementmoduletypes.ModuleName,
+				Config: appconfig.WrapAny(&procurementmoduletypes.Module{}),
+			},
+			{
+				Name:   infrastructuremoduletypes.ModuleName,
+				Config: appconfig.WrapAny(&infrastructuremoduletypes.Module{}),
 			},
 			// this line is used by starport scaffolding # stargate/app/moduleConfig
 		},

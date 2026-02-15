@@ -1,0 +1,174 @@
+syntax = "proto3";
+package govchain.procurement.v1;
+
+option go_package = "govchain/x/procurement/types";
+
+import "google/protobuf/timestamp.proto";
+
+// ============================================================================
+// OCDS Common Building Blocks
+// Reference: https://standard.open-contracting.org/latest/en/schema/reference/
+// ============================================================================
+
+// Value - Financial values with currency (ISO 4217)
+message Value {
+  string amount = 1;   // Use string for precise decimal representation on-chain
+  string currency = 2; // ISO 4217 currency code (closed codelist)
+}
+
+// Period - A time period with start/end dates and optional duration
+message Period {
+  google.protobuf.Timestamp start_date = 1;
+  google.protobuf.Timestamp end_date = 2;
+  google.protobuf.Timestamp max_extent_date = 3;
+  int32 duration_in_days = 4;
+}
+
+// Identifier - Legal entity identification
+message Identifier {
+  string scheme = 1;     // From org-id.guide register
+  string id = 2;
+  string legal_name = 3;
+  string uri = 4;
+}
+
+// Address - Physical/postal address
+message Address {
+  string street_address = 1;
+  string locality = 2;
+  string region = 3;
+  string postal_code = 4;
+  string country_name = 5;
+}
+
+// ContactPoint - Contact details
+message ContactPoint {
+  string name = 1;
+  string email = 2;
+  string telephone = 3;
+  string fax_number = 4;
+  string url = 5;
+}
+
+// Classification - Item classification using standard schemes (CPV, UNSPSC, etc.)
+message Classification {
+  string scheme = 1; // e.g. "CPV", "UNSPSC" (open codelist: itemClassificationScheme)
+  string id = 2;
+  string description = 3;
+  string uri = 4;
+}
+
+// Unit - Unit of measure with price
+message Unit {
+  string scheme = 1; // e.g. "UNCEFACT" (open codelist: unitClassificationScheme)
+  string id = 2;
+  string name = 3;
+  Value value = 4;
+  string uri = 5;
+}
+
+// Item - Line items for goods, works, or services
+message Item {
+  string id = 1;
+  string description = 2;
+  Classification classification = 3;
+  repeated Classification additional_classifications = 4;
+  string quantity = 5; // string for decimal precision
+  Unit unit = 6;
+}
+
+// Document - Attached documents and notices
+message Document {
+  string id = 1;
+  string document_type = 2; // Open codelist: documentType
+  string title = 3;
+  string description = 4;
+  string url = 5;
+  google.protobuf.Timestamp date_published = 6;
+  google.protobuf.Timestamp date_modified = 7;
+  string format = 8;   // IANA media type
+  string language = 9;  // BCP47 / ISO 639-1
+
+  // On-chain extension: content hash for integrity verification
+  string content_hash = 10;       // SHA-256 hash of document content
+  string content_hash_method = 11; // e.g. "SHA-256"
+  string ipfs_cid = 12;           // Optional IPFS content identifier
+}
+
+// Milestone - Progress tracking
+message Milestone {
+  string id = 1;
+  string title = 2;
+  string type = 3;        // Open codelist: milestoneType
+  string description = 4;
+  string code = 5;
+  google.protobuf.Timestamp due_date = 6;
+  google.protobuf.Timestamp date_met = 7;
+  google.protobuf.Timestamp date_modified = 8;
+  string status = 9;      // Closed codelist: milestoneStatus (scheduled, met, notMet, partiallyMet)
+}
+
+// OrganizationReference - Cross-reference to parties section
+message OrganizationReference {
+  string id = 1;   // References Organization.id in parties array
+  string name = 2; // Convenience copy of the name
+}
+
+// Organization - Full party details (used in the top-level parties array)
+message Organization {
+  string id = 1;
+  string name = 2;
+  Identifier identifier = 3;
+  repeated Identifier additional_identifiers = 4;
+  Address address = 5;
+  ContactPoint contact_point = 6;
+  repeated string roles = 7; // Open codelist: partyRole (buyer, procuringEntity, supplier, tenderer, etc.)
+
+  // On-chain extension: verified entity metadata
+  string on_chain_address = 8; // Cosmos SDK account address if applicable
+  bool is_verified = 9;        // Whether identity has been verified on-chain
+}
+
+// Amendment - Formal changes to tender/award/contract
+message Amendment {
+  string id = 1;
+  google.protobuf.Timestamp date = 2;
+  string rationale = 3;
+  string description = 4;
+  string amends_release_id = 5;
+  string release_id = 6;
+}
+
+// RelatedProcess - Cross-references between contracting processes
+message RelatedProcess {
+  string id = 1;
+  repeated string relationship = 2; // Open codelist: relatedProcess
+  string title = 3;
+  string scheme = 4;     // Open codelist: relatedProcessScheme
+  string identifier = 5; // The OCID or other identifier of the related process
+  string uri = 6;
+}
+
+// Budget - Budget information linked to planning
+message Budget {
+  string id = 1;
+  string description = 2;
+  Value amount = 3;
+  string project = 4;
+  string project_id = 5;
+  string uri = 6;
+}
+
+// Transaction - Spending transaction (modelled on IATI)
+message Transaction {
+  string id = 1;
+  string source = 2; // URI to Fiscal Data Package, IATI, etc.
+  google.protobuf.Timestamp date = 3;
+  Value value = 4;
+  OrganizationReference payer = 5;
+  OrganizationReference payee = 6;
+  string uri = 7;
+
+  // On-chain extension: transaction verification
+  string tx_hash = 8; // Cosmos SDK transaction hash that recorded this
+}

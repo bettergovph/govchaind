@@ -1,0 +1,114 @@
+syntax = "proto3";
+
+package govchain.infrastructure.v1;
+
+import "amino/amino.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "govchain/infrastructure/v1/params.proto";
+import "govchain/infrastructure/v1/project.proto";
+
+option go_package = "govchain/x/infrastructure/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // Parameters queries the parameters of the module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/govchain/infrastructure/v1/params";
+  }
+
+  // GetProject gets a specific infrastructure project by ID.
+  rpc GetProject(QueryGetProjectRequest) returns (QueryGetProjectResponse) {
+    option (google.api.http).get = "/govchain/infrastructure/v1/project/{project_id}";
+  }
+
+  // ListProjects lists all infrastructure projects.
+  rpc ListProjects(QueryListProjectsRequest) returns (QueryListProjectsResponse) {
+    option (google.api.http).get = "/govchain/infrastructure/v1/project";
+  }
+
+  // ProjectsBySector queries projects filtered by sector.
+  rpc ProjectsBySector(QueryProjectsBySectorRequest) returns (QueryProjectsBySectorResponse) {
+    option (google.api.http).get = "/govchain/infrastructure/v1/projects_by_sector/{sector}";
+  }
+
+  // ProjectsByStatus queries projects filtered by status.
+  rpc ProjectsByStatus(QueryProjectsByStatusRequest) returns (QueryProjectsByStatusResponse) {
+    option (google.api.http).get = "/govchain/infrastructure/v1/projects_by_status/{status}";
+  }
+
+  // ProjectsByRegion queries projects filtered by region.
+  rpc ProjectsByRegion(QueryProjectsByRegionRequest) returns (QueryProjectsByRegionResponse) {
+    option (google.api.http).get = "/govchain/infrastructure/v1/projects_by_region/{region}";
+  }
+}
+
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params holds all the parameters of this module.
+  Params params = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+}
+
+// QueryGetProjectRequest defines the request for getting a specific project.
+message QueryGetProjectRequest {
+  string project_id = 1;
+}
+
+// QueryGetProjectResponse defines the response for getting a specific project.
+message QueryGetProjectResponse {
+  InfraProject project = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryListProjectsRequest defines the request for listing projects.
+message QueryListProjectsRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryListProjectsResponse defines the response for listing projects.
+message QueryListProjectsResponse {
+  repeated InfraProject projects = 1 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryProjectsBySectorRequest defines the request for querying projects by sector.
+message QueryProjectsBySectorRequest {
+  string sector = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryProjectsBySectorResponse defines the response for querying projects by sector.
+message QueryProjectsBySectorResponse {
+  repeated InfraProject projects = 1 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryProjectsByStatusRequest defines the request for querying projects by status.
+message QueryProjectsByStatusRequest {
+  string status = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryProjectsByStatusResponse defines the response for querying projects by status.
+message QueryProjectsByStatusResponse {
+  repeated InfraProject projects = 1 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryProjectsByRegionRequest defines the request for querying projects by region.
+message QueryProjectsByRegionRequest {
+  string region = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryProjectsByRegionResponse defines the response for querying projects by region.
+message QueryProjectsByRegionResponse {
+  repeated InfraProject projects = 1 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
